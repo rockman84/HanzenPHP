@@ -126,7 +126,6 @@ public $convert = TRUE;
 			}
 			else{
 				$source = '['.$source.']';
-				log_message('info',text('MISSING_LANGUAGE',array($source)));
 			}
 		}
 		return $source;

@@ -42,7 +42,7 @@ public $device;
 	public function get_device(){
 		return $this->session->userdata('device');
 	}
-	public function toogle_device(){
+	public function toggle_device(){
 		$data = $this->get_device();
 		$new_view = 'bot';
 		if($data['view'] == 'mobile'){

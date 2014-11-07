@@ -6,9 +6,7 @@
  *
  * @package		Hanzen PHP
  * @author		Wong Hansen
- * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc.
- * @license		http://codeigniter.com/user_guide/license.html
- * @link		http://codeigniter.com
+ * @copyright	Copyright (c) 2014, Wong Hansen
  * @since		Version 1.0.1
  * @filesource
  */
@@ -25,7 +23,7 @@
  * @subpackage	Core
  * @category	Core
  * @author		Wong Hansen
- * @link		http://codeigniter.com/user_guide/general/controllers.html
+ * 
  */
  
 /** Hanzen PHP Define **/

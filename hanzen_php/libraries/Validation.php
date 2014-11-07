@@ -1,4 +1,4 @@
-<?php
+<?php if ( ! defined('HP_PATH')) exit('require HanzenPHP package');
 /** Validation Class
 * modified from Form_validation library
 * @author Hansen Wong, huang_hanzen@yahoo.co.id
@@ -9,11 +9,12 @@
 */
 class Validation {
 public $HP;
-public $data=array();
-public $rules;
-public $error=false;
-public $primary;
-public $update=false;
+public $data = array();
+public $rules = array();
+public $primary = null;
+public $update = false;
+public $error = false;
+public $msg = array();
 	public function __construct(){
 		$this->HP = & get_instance();
 		$this->HP->lang->load('validation');
@@ -96,7 +97,7 @@ public $update=false;
 							}
 						}
 						else{
-							set_msg('RULE_NOT_FOUND',$rule,'info');
+							show_error('The rule '.$rule.' not found');
 							$this->error = true;
 						}
 					}
@@ -128,6 +129,12 @@ public $update=false;
 		else{
 			set_msg('NO_INPUT_DATA');
 		}
+	}
+	public function set_error($field,$rule){
+		if(!isset($this->msg[$field])){
+			$this->msg[$field] = array();
+		}
+		$this->msg[$field][$rule] = '';
 	}
 	public function none(){
 		return true;

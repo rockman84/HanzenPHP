@@ -63,6 +63,13 @@ function get_model ($class = null){
 	return $HP->model;
 }
 /**
+ * load helper
+ **/
+function get_helper($files){
+	$HP = & get_instance();
+	$HP->load->helper($files);
+}
+/**
  * return a library class
  **/
 function get_library($class = null){

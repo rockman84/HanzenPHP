@@ -6,7 +6,7 @@
  *
  * @package		Hanzen PHP
  * @author		Wong Hansen
- * @copyright	Copyright (c) 2014, Wong Hansen
+ * @copyright	Copyright (c) 2014, Wong Hansen.
  * @since		Version 1.0.1
  * @filesource
  */
@@ -23,16 +23,11 @@
  * @subpackage	Core
  * @category	Core
  * @author		Wong Hansen
- * 
  */
  
 /** Hanzen PHP Define **/
-define('HP_PATH',APPPATH.'third_party/hanzen_php/');
+define('HP_PATH',APPPATH.'../HanzenPHP/hanzen_php/');
 define('HP_VERSION','1.0.1');
-
-/**
- * require_once HP_PATH.'libraries/decode_source_code.php';
- */
 
 /** Auto Load Class
  * auto load file necessary when extend class
@@ -61,7 +56,6 @@ public $exception = true;
 		parent::__CONSTRUCT();
 		/* initialize default hanzen packages */
 		$this->plugin = new stdClass();
-		$this->library = new stdClass();
 		$this->model = new stdClass();
 		$this->title = 'HanzenPHP (Extend Version)';
 		$this->load->add_package_path(HP_PATH);
@@ -95,16 +89,6 @@ public $exception = true;
 	 */
 	protected function _after(){
 		return;
-	}
-	public function direct($plugin,$method,$param = array()){
-		$this->load->plugin($plugin);
-		call_user_func_array(array($this->plugin->$plugin,$method),$param);
-	}
-	public function exception (){
-		if($this->msg->is_error and $this->exception){
-			throw new Exception('TERMINATE');
-		}
-		return true;
 	}
 }
 /* Location: ./core/HP_Controller.php */

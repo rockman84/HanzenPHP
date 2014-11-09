@@ -11,6 +11,7 @@ class HP_Loader extends CI_Loader{
 		}
 		return $HP->plugin;
 	}
+	/** plugin init class **/
 	protected function _load_plugin($plugin,$params = null){
 		$plugin = strtolower($plugin);
 		$file_name = $plugin . '_plugin';

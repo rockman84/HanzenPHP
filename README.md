@@ -4,11 +4,10 @@ HanzenPHP is extended third_party for CodeIgniter
 
 <h2>Features:</h2>
 <ul>
-<li>easy load class with simple function</li>
+<li>Improvement writing code</li>
 <li>easy error handling</li>
-<li>changed writing code for Model class with surfix '_Model'</li>
-<li>added plugin library</li>
-<li>added before and after controller execute</li>
+<li>plugin class</li>
+<li>before and after controller execute</li>
 <li>many more...</li>
 </ul>
 <h2>requirements</h2>

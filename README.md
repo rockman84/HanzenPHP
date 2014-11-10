@@ -11,7 +11,10 @@ HanzenPHP is extended third_party for CodeIgniter
 <li>added before and after controller execute</li>
 <li>many more...</li>
 </ul>
-
+<h2>requirements</h2>
+<ul>
+<li>CodeIgniter V2.1.4 or more</li>
+</ul>
 <h2>how to install</h2>
 <ul>
 <li>copy 'hanzen_php' folder into 'application/third_pary/'</li>

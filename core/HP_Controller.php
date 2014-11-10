@@ -26,7 +26,7 @@
  */
  
 /** Hanzen PHP Define **/
-define('HP_PATH',APPPATH.'../HanzenPHP/hanzen_php/');
+define('HP_PATH',APPPATH.'third_party/hanzen_php/');
 define('HP_VERSION','1.0.1');
 
 /** Auto Load Class

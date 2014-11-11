@@ -107,3 +107,19 @@ function set_msg($string,$replace = null,$index = 'error'){
 	$HZ = & get_instance();
 	$HZ->msg->set($string,$replace,$index);
 }
+
+/**
+ * String replace
+ */
+function string_replace($string,$replace){
+	if(is_array($replace)){
+		foreach($replace as $name => $val){
+			$word['find'][]= '{'.$name.'}';
+			$word['replace'][] = $val;
+		}
+		return str_replace($word['find'],$word['replace'],$string);
+	}
+	else{
+		return str_replace('{0}',$replace,$string);
+	}
+}

@@ -35,7 +35,6 @@ public $convert = TRUE;
 			$this->set_msg($string,$replace,$index);
 		}
 	}
-	
 	public function set_msg($string, $replace = null, $group = 'error', $set_error = TRUE){
 		$this->msg[$group][] = array(
 			'index' => $string,
@@ -63,63 +62,29 @@ public $convert = TRUE;
 			return TRUE;
 		}
 	}
-	/* get msg by group */
-	public function get_msg($group = 'error'){
-		if(!isset($this->msg[$group])){
-			$msg = array();
-		}
-		else{
-			$msg = $this->msg[$group];
-		}
-		$result = array(
-			'msg' => $msg,
-			'group'	=> $group,
-			'is_error' => $this->is_error,
-			'total' => count($msg)
-		);
-		return $result;
-	}
 	/* get all msg return array*/
 	public function get_all(){
 		$result = array(
-			'msg' => $this->convert_array($this->msg),
+			'msg' => $this->_convert_array($this->msg),
 			'is_error' => $this->is_error,
 			'total' => $this->total_msg
 		);
 		return $result;
 	}
-	/* get all / group message return html/string */
-	public function get_html($msg = false){
-		$data = $msg?$msg:$this->get_all();
-		$html= '';
-		foreach($data['msg'] as $name => $val){
-			if(is_array($val)){
-				$html .= '<h3>'.$name.'</h3><ul>';
-				foreach($val as $value){
-					$html .= '<li>'.$value.'</li>';
-				}
-				$html .= '</ul>';
-			}
-			else{
-				$html .='<li>'.$val.'</li>';
-			}
-		}
-		return '<div id="messages">'.$html.'</div>';
-	}
 	/* run batch convert */
-	protected function convert_array($data){
+	protected function _convert_array($data){
 		$msg = array();
 		if(is_array($data)){
 			foreach($data as $name => $val){
 				foreach($val as $index){
-					$msg[$name][] = $this->replace($this->convert($index['index']),$index['replace']);
+					$msg[$name][] = string_replace($this->_convert($index['index']),$index['replace']);
 				}
 			}
 		}
 		return $msg;
 	}
 	/* run single convert */
-	protected function convert($source){
+	protected function _convert($source){
 		if($this->convert){
 			if(isset($this->HZ->lang->language[$source])){
 				$source = $this->HZ->lang->language[$source];
@@ -129,19 +94,6 @@ public $convert = TRUE;
 			}
 		}
 		return $source;
-	}
-	/* replace index msg to langguage */
-	public function replace($string,$replace){
-		if(is_array($replace)){
-			foreach($replace as $name => $val){
-				$word['find'][]= '{'.$name.'}';
-				$word['replace'][] = $val;
-			}
-			return str_replace($word['find'],$word['replace'],$string);
-		}
-		else{
-			return $string;
-		}
 	}
 }
 /** End of Msg Class **/

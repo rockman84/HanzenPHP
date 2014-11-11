@@ -3,27 +3,36 @@
 * modified from Form_validation library
 * @author Hansen Wong, huang_hanzen@yahoo.co.id
 * @copyright 2014 Hansen Wong
-* @license http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
-* @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
-* @version 1.0
+* @version 1.2
 */
 class Validation {
 public $HP;
+public $label;
 public $data = array();
 public $rules = array();
 public $primary = null;
 public $update = false;
 public $error = false;
 public $msg = array();
-	public function __construct(){
+public $flash_data = false;
+	public function __CONSTRUCT(){
 		$this->HP = & get_instance();
-		$this->HP->lang->load('validation');
 		// Set the character encoding in MB.
 		if (function_exists('mb_internal_encoding')){
 			mb_internal_encoding($this->HP->config->item('charset'));
 		}
 	}
-	public function set($data,$rule = array(),$base_on_rule = true){
+	/** set language validation **/
+	public function set_language($file = 'validation'){
+		$this->HP->lang->load($file);
+		return $this;
+	}
+	/** Set field for label name **/
+	public function set_label($data){
+		$this->label = $data;
+		return $this;
+	}
+	protected function _set($data,$rule = array(),$base_on_rule = true){
 		$this->rules = $rule;
 		if(is_array($this->rules) and is_array($data)){
 			/* mapping base on rules */
@@ -33,7 +42,8 @@ public $msg = array();
 					$this->data [$field] = array(
 						'rule' 	=> $val,
 						'value' => $value,
-						'field' => $field
+						'field' => $field,
+						'label' => null
 					);
 				}
 			}
@@ -45,27 +55,42 @@ public $msg = array();
 							'rule'  => $this->rules[$field],
 							'value' => $val,
 							'field' => $field,
+							'label' => null
 						);
+					}
+				}
+			}
+			/* set label */
+			if(is_array($this->label)){
+				foreach($this->data as $data){
+					if(isset($this->label[$data['field']])){
+						$this->data[$data['field']]['label'] = $this->label[$data['field']];
 					}
 				}
 			}
 		}
 	}
+	/**
+	 * @return Boolean
+	 */
 	public function check($data,$rule = array(),$base_on_rule = true){
 		/* clean data */
 		$this->data = array();
+		$this->error = false;
+		$this->msg = array();
 		/* mapping validation */
-		$this->set($data,$rule,$base_on_rule);
+		$this->_set($data,$rule,$base_on_rule);
 		/* run checking */
-		$this->run();
+		$this->_run();
 		/* result checking */
-		return !$this->HP->msg->is_error;
+		return !$this->error;
 	}
-	public function run(){
-		$this->HP->lang->open('validation');
+	protected function _run(){
 		/** here we go!...**/
 		if(count($this->data)){
+			/** analyst all data **/
 			foreach($this->data as $data){
+				/** analyst field data **/
 				foreach(explode('|',$data['rule']) as $role){
 					$param = false;
 					if (preg_match("/(.*?)\[(.*)\]/",$role, $match)){
@@ -92,13 +117,22 @@ public $msg = array();
 					if(!$callback){
 						if(method_exists($this,$rule)){
 							if(!$this->$rule($data['value'],$param,$data['field'])){
-								set_msg(strtoupper($rule),array(ucwords(str_replace('_',' ',$data['field'])),$param));
-								$this->error = true;
+								$this->_set_error($rule,$param,$data['field'],$data['value'],$data['label']);
+							}
+						}
+						elseif(function_exists($rule)){
+							$prep = $rule($this->data[$data['field']]['value']);
+							if(is_bool($prep)){
+								if($prep){
+									$this->_set_error($rule,$param,$data['field'],$data['value'],$data['label']);
+								}
+							}
+							else{
+								$this->data[$data['field']]['value'] = $prep;
 							}
 						}
 						else{
 							show_error('The rule '.$rule.' not found');
-							$this->error = true;
 						}
 					}
 					/** using callback **/
@@ -106,23 +140,27 @@ public $msg = array();
 						/** call_method **/
 						if($callback == 'parent' and method_exists($this->HP,$call[0])){
 							if(!$this->HP->$call[1]($data['value'],$param)){
-								set_msg(strtoupper($call[0]),array($data['field'],$param));
-								$this->error = true;
+								$this->_set_error($call[0],$param,$data['field'],$data['value'],$data['label']);
 							}
 						}
 						/** call_class:method **/
 						elseif($callback == 'class' and method_exists($this->HP->$call[0],$call[1])){
 							if(!$this->HP->$call[0]->$call[1]($data['value'],$param)){
-								set_msg(strtoupper($call[1]),array($data['field'],$param));
-								$this->error = true;
+								$this->_set_error($call[1],$param,$data['field'],$data['value'],$data['label']);
 							}
 						}
 						else{
-							set_msg('METHOD_NOT_FOUND',$call,'info');
-							$this->error = true;
+							show_error('Method '.$call.' not found');
 						}
 					}
 				}
+				/** if error and flash_data true set flash data **/
+				if($this->flash_data){
+					$this->HP->session->set_flashdata($data['field'],$this->get_error($data['field']));
+				}
+			}
+			if($this->error){
+				set_msg('INVALID_FORM');
 			}
 		}
 		/** No have data **/
@@ -130,11 +168,29 @@ public $msg = array();
 			set_msg('NO_INPUT_DATA');
 		}
 	}
-	public function set_error($field,$rule){
+	/** set error message **/
+	protected function _set_error($rule,$param,$field,$value,$label){
+		$this->error = true;
 		if(!isset($this->msg[$field])){
 			$this->msg[$field] = array();
 		}
-		$this->msg[$field][$rule] = '';
+		$lang = $this->HP->lang->line(strtoupper($rule));
+		$lang = $lang == ''?'['.$rule.']':$lang;
+		if($label== null){
+			$label = $field;
+		}
+		/** {0} = label / field, {1} = param, {2} = value, {3} rule **/
+		$this->msg[$field][] = string_replace($lang, array(ucwords(str_replace('_',' ',$label)),$param,$rule,$value));
+	}
+	/** get error message **/
+	public function get_error($field = null){
+		if($field != null AND isset($this->msg[$field])){
+			return $this->msg[$field];
+		}
+		elseif($field == null){
+			return $this->msg;
+		}
+		return array();
 	}
 	public function none(){
 		return true;

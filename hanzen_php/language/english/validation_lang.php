@@ -25,7 +25,7 @@ $lang['IS_NATURAL_NO_ZERO']	= "The {0} field must contain a number greater than 
 $lang['DECIMAL']			= "The {0} field must contain a decimal number.";
 $lang['LESS_THAN']			= "The {0} field must contain a number less than {1}.";
 $lang['GREATER_THAN']		= "The {0} field must contain a number greater than {1}.";
-$lang['RULE_NOT_FOUND']		= "The rule {0} not found";
 $lang['NO_INPUT_DATA']		= "Couldn't find input data.";
+$lang['INVALID_FORM']		= "Invalid form data";
 
 /* End of file validation_lang.php */

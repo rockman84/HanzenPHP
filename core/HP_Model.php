@@ -1,6 +1,5 @@
 <?php
 class HP_Model extends CI_Model{
-public $HZ;
 public $table;
 protected $class;
 private $tmp_tabel;
@@ -34,28 +33,28 @@ private $tmp_tabel;
 		return $this->db->from($this->table);
 	}
 	public function create($data){
-		$this->HZ->load->library('validation');
+		$this->load->library('validation');
+		
 		if($this->validation->check($data,$this->rule())){
-			return $this->HZ->db->insert($this->class,$data);
+			return $this->db->insert($this->class,$data);
 		}
 	}
 	public function update($data){
-		$this->load->library('validation');
-		$this->validation->update = true;
+		get_library('validation')->update = true;
 		if($this->validation->check($data,$this->rule(),false)){
-			$this->HZ->db->where($this->validation->primary,$data[$this->validation->primary]);
+			$this->db->where($this->validation->primary,$data[$this->validation->primary]);
 			unset($data[$this->validation->primary]);
-			return $this->HZ->db->update($this->class,$data);
+			return $this->db->update($this->class,$data);
 		}
 	}
 	public function delete($condition,$limit = false){
 		if($limit){
-			$this->HZ->db->limit($limit);
+			$this->db->limit($limit);
 		}
-		return $this->HZ->db->delete($this->table,$condition);
+		return $this->db->delete($this->table,$condition);
 	}
 	public function count_all(){
-		return $this->HZ->db->count_all($this->table);
+		return $this->db->count_all($this->table);
 	}
 }
 /* Location: ./core/HP_Model.php */

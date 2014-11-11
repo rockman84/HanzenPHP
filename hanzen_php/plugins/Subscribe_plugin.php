@@ -5,29 +5,26 @@ class Subscribe_Plugin extends HP_Plugin{
 		$this->load->model('subscribe');
 	}
 	function register($name,$email){
-		$this->load->library('validation');
-		$rule = array(
-			'name'	=> 'required|min_length[5]|max_length[50]'
-			'email' => 'valid_email|is_unique[subscribe.email]|max_length[50]'
+		$label = array(
+			'name' => 'Full Name',
+			'email' => 'E-Mail Address'
 		);
+		get_library('validation')->set_language()->set_label($label);
 		$data = array(
 			'name' => $name,
 			'email' => $email
 		);
-		if($this->validation->check($data,$rule)){
-			$this->db->insert($this->db->dbprefix('subscribe'),array('email' => $email));
-		}
+		get_model('subscribe')->create($data);
 	}
 	function unregister($email){
-		$this->load->library('validation');
-		$rule = array(
-			'email' => 'valid_email|is_exists[subscribe.email]'
-		);
 		$data = array(
 			'email' => $email
 		);
-		if($this->validation->check($data,$rule)){
-			$this->db->delete($this->db->dbprefix('subscribe'),$data);
+		$rule = array(
+			'email' => 'is_exists[subscribe.email]'
+		);
+		if(get_library('validation')->set_language()->check($data,$rule)){
+			get_model('subscribe')->delete($data);
 		}
 	}
 	function remove_by_id($id){

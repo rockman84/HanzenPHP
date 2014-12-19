@@ -4,6 +4,15 @@
 * @author Hansen Wong, huang_hanzen@yahoo.co.id
 * @copyright 2014 Hansen Wong
 * @version 1.2
+
+@example :
+	$rule = array(
+		'email' => 'min_length[5]|valid_email|max_length[30]|required|strtoupper',
+		'ip_addr' => 'required|valid_ip|strtoupper'
+	);
+	if(get_library('validation')->set_language()->check($_POST,$rule)){
+		// do something when valid
+	}
 */
 class Validation {
 public $HP;
@@ -22,12 +31,57 @@ public $flash_data = false;
 			mb_internal_encoding($this->HP->config->item('charset'));
 		}
 	}
-	/** set language validation **/
+	/**
+	 * Check validation input
+	 *
+	 * @param array
+	 * @param array
+	 * @param boolean
+	 * @return Boolean
+	 */
+	public function check($data,$rule = array(),$base_on_rule = true){
+		/* clean data */
+		$this->data = array();
+		$this->error = false;
+		$this->msg = array();
+		/* mapping validation */
+		$this->_set($data,$rule,$base_on_rule);
+		/* run checking */
+		$this->_run();
+		/* result checking */
+		return !$this->error;
+	}
+	/**
+	 * get error message
+	 * 
+	 * @param string
+	 * @return array
+	 **/
+	public function get_error($field = null){
+		if($field != null AND isset($this->msg[$field])){
+			return $this->msg[$field];
+		}
+		elseif($field == null){
+			return $this->msg;
+		}
+		return array();
+	}
+	/**
+	 * set language for error message
+	 *
+	 * @param string - file name in language folder
+	 * @return void
+	 **/
 	public function set_language($file = 'validation'){
 		$this->HP->lang->load($file);
 		return $this;
 	}
-	/** Set field for label name **/
+	/**
+	 * Set field for replace label name
+	 *
+	 * @param array
+	 * @return void
+	 **/
 	public function set_label($data){
 		$this->label = $data;
 		return $this;
@@ -69,21 +123,6 @@ public $flash_data = false;
 				}
 			}
 		}
-	}
-	/**
-	 * @return Boolean
-	 */
-	public function check($data,$rule = array(),$base_on_rule = true){
-		/* clean data */
-		$this->data = array();
-		$this->error = false;
-		$this->msg = array();
-		/* mapping validation */
-		$this->_set($data,$rule,$base_on_rule);
-		/* run checking */
-		$this->_run();
-		/* result checking */
-		return !$this->error;
 	}
 	protected function _run(){
 		/** here we go!...**/
@@ -182,16 +221,10 @@ public $flash_data = false;
 		/** {0} = label / field, {1} = param, {2} = value, {3} rule **/
 		$this->msg[$field][] = string_replace($lang, array(ucwords(str_replace('_',' ',$label)),$param,$rule,$value));
 	}
-	/** get error message **/
-	public function get_error($field = null){
-		if($field != null AND isset($this->msg[$field])){
-			return $this->msg[$field];
-		}
-		elseif($field == null){
-			return $this->msg;
-		}
-		return array();
-	}
+	/**
+	 * nothing do
+	 * @return true
+	 **/
 	public function none(){
 		return true;
 	}
@@ -203,10 +236,16 @@ public $flash_data = false;
 			return ( ! empty($str));
 		}
 	}
+	/**
+	 * regex_match[%^]
+	 **/
 	public function regex_match($str, $regex){
 		if ( ! preg_match($regex, $str)){return FALSE;}
 		return  TRUE;
 	}
+	/**
+	 * matches[field_name]
+	 **/
 	public function matches($str, $field){
 		if ( ! isset($_POST[$field])){
 			return FALSE;
@@ -214,7 +253,11 @@ public $flash_data = false;
 		$field = $_POST[$field];
 		return ($str !== $field)? FALSE : TRUE;
 	}
-	/** primary[AI] / [none:table.field] **/
+	/**
+	 * primary[AI] -  attribute is primary key and auto increment
+	 * primary[none:table_name.field_name] - attribute is primary key without auto increment
+	 *
+	 **/
 	public function primary($str,$params,$field){
 		$param = explode(':', $params);
 		if($param[0]!='AI' AND !empty($str)){
@@ -223,6 +266,9 @@ public $flash_data = false;
 		$this->primary = $field;
 		return true;
 	}
+	/**
+	 * is_unique[table_name.field_name]
+	 **/
 	public function is_unique($str, $field){
 		list($table, $field)=explode('.', $field);
 		if($this->update){
@@ -232,46 +278,112 @@ public $flash_data = false;
 		
 		return $query->num_rows() === 0;
     }
+	/**
+	 * is_exists[table_name.field_name]
+	 **/
 	public function is_exists($str, $field){ 
 		list($table, $field)=explode('.', $field);
 		$query = $this->HP->db->limit(1)->get_where($this->HP->db->dbprefix($table), array($field => $str));
 		return $query->num_rows() === 1;
 	}
-	public function min_length($str, $val){
-		if($str){
-			if (preg_match("/[^0-9]/", $val)){return FALSE;}
-			if (function_exists('mb_strlen')){
-				return (mb_strlen($str) < $val) ? FALSE : TRUE;
-			}
-			return (strlen($str) < $val) ? FALSE : TRUE;
-		}
-		else{
-			return true;
-		}
-	}
-	public function max_length($str, $val){
-		if (preg_match("/[^0-9]/", $val)){
+	/**
+	 * Minimum Length
+	 *
+	 * @access	public
+	 * @param	string
+	 * @param	value
+	 * @return	bool
+	 */
+	public function min_length($str, $val)
+	{
+		if (preg_match("/[^0-9]/", $val))
+		{
 			return FALSE;
 		}
-		if (function_exists('mb_strlen')){
+
+		if (function_exists('mb_strlen'))
+		{
+			return (mb_strlen($str) < $val) ? FALSE : TRUE;
+		}
+
+		return (strlen($str) < $val) ? FALSE : TRUE;
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Max Length
+	 *
+	 * @access	public
+	 * @param	string
+	 * @param	value
+	 * @return	bool
+	 */
+	public function max_length($str, $val)
+	{
+		if (preg_match("/[^0-9]/", $val))
+		{
+			return FALSE;
+		}
+
+		if (function_exists('mb_strlen'))
+		{
 			return (mb_strlen($str) > $val) ? FALSE : TRUE;
 		}
+
 		return (strlen($str) > $val) ? FALSE : TRUE;
 	}
-	public function exact_length($str, $val){
-		if (preg_match("/[^0-9]/", $val)){return FALSE;}
-		if (function_exists('mb_strlen')){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Exact Length
+	 *
+	 * @access	public
+	 * @param	string
+	 * @param	value
+	 * @return	bool
+	 */
+	public function exact_length($str, $val)
+	{
+		if (preg_match("/[^0-9]/", $val))
+		{
+			return FALSE;
+		}
+
+		if (function_exists('mb_strlen'))
+		{
 			return (mb_strlen($str) != $val) ? FALSE : TRUE;
 		}
+
 		return (strlen($str) != $val) ? FALSE : TRUE;
 	}
-	public function valid_email($str){
-		if($str){
-			return ( ! preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $str)) ? FALSE : TRUE;
-		}
-		else{return TRUE;}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Valid Email
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function valid_email($str)
+	{
+		return ( ! preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $str)) ? FALSE : TRUE;
 	}
-	public function valid_emails($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Valid Emails
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function valid_emails($str)
+	{
 		if (strpos($str, ',') === FALSE)
 		{
 			return $this->valid_email(trim($str));
@@ -287,81 +399,309 @@ public $flash_data = false;
 
 		return TRUE;
 	}
-	public function valid_ip($ip, $which = ''){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Validate IP Address
+	 *
+	 * @access	public
+	 * @param	string
+	 * @param	string "ipv4" or "ipv6" to validate a specific ip format
+	 * @return	string
+	 */
+	public function valid_ip($ip, $which = '')
+	{
 		return $this->HP->input->valid_ip($ip, $which);
 	}
-	public function alpha($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Alpha
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function alpha($str)
+	{
 		return ( ! preg_match("/^([a-z])+$/i", $str)) ? FALSE : TRUE;
 	}
-	public function alpha_numeric($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Alpha-numeric
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function alpha_numeric($str)
+	{
 		return ( ! preg_match("/^([a-z0-9])+$/i", $str)) ? FALSE : TRUE;
 	}
-	public function alpha_dash($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Alpha-numeric with underscores and dashes
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function alpha_dash($str)
+	{
 		return ( ! preg_match("/^([-a-z0-9_-])+$/i", $str)) ? FALSE : TRUE;
 	}
-	public function numeric($str){
-		if($str){return (bool)preg_match( '/^[\-+]?[0-9]*\.?[0-9]+$/', $str);}
-		else{return TRUE;}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Numeric
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function numeric($str)
+	{
+		return (bool)preg_match( '/^[\-+]?[0-9]*\.?[0-9]+$/', $str);
+
 	}
-	public function is_numeric($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Is Numeric
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function is_numeric($str)
+	{
 		return ( ! is_numeric($str)) ? FALSE : TRUE;
 	}
-	public function integer($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Integer
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function integer($str)
+	{
 		return (bool) preg_match('/^[\-+]?[0-9]+$/', $str);
 	}
-	public function decimal($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Decimal number
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function decimal($str)
+	{
 		return (bool) preg_match('/^[\-+]?[0-9]+\.[0-9]+$/', $str);
 	}
-	public function greater_than($str, $min){
-		if ( ! is_numeric($str)){return FALSE;}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Greather than
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function greater_than($str, $min)
+	{
+		if ( ! is_numeric($str))
+		{
+			return FALSE;
+		}
 		return $str > $min;
 	}
-	public function less_than($str, $max){
-		if ( ! is_numeric($str)){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Less than
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function less_than($str, $max)
+	{
+		if ( ! is_numeric($str))
+		{
 			return FALSE;
 		}
 		return $str < $max;
 	}
-	public function is_natural($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Is a Natural number  (0,1,2,3, etc.)
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function is_natural($str)
+	{
 		return (bool) preg_match( '/^[0-9]+$/', $str);
 	}
-	public function is_natural_no_zero($str){
-		if ( ! preg_match( '/^[0-9]+$/', $str)){return FALSE;}
-		if ($str == 0){	return FALSE;}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Is a Natural number, but not a zero  (1,2,3, etc.)
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function is_natural_no_zero($str)
+	{
+		if ( ! preg_match( '/^[0-9]+$/', $str))
+		{
+			return FALSE;
+		}
+
+		if ($str == 0)
+		{
+			return FALSE;
+		}
+
 		return TRUE;
 	}
-	public function valid_base64($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Valid Base64
+	 *
+	 * Tests a string for characters outside of the Base64 alphabet
+	 * as defined by RFC 2045 http://www.faqs.org/rfcs/rfc2045
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	bool
+	 */
+	public function valid_base64($str)
+	{
 		return (bool) ! preg_match('/[^a-zA-Z0-9\/\+=]/', $str);
 	}
-	public function prep_for_form($data = ''){
-		if (is_array($data)){
-			foreach ($data as $key => $val){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Prep data for form
+	 *
+	 * This function allows HTML to be safely shown in a form.
+	 * Special characters are converted.
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	string
+	 */
+	public function prep_for_form($data = '')
+	{
+		if (is_array($data))
+		{
+			foreach ($data as $key => $val)
+			{
 				$data[$key] = $this->prep_for_form($val);
 			}
+
 			return $data;
 		}
-		if ($this->_safe_form_data == FALSE OR $data === ''){
+
+		if ($this->_safe_form_data == FALSE OR $data === '')
+		{
 			return $data;
 		}
+
 		return str_replace(array("'", '"', '<', '>'), array("&#39;", "&quot;", '&lt;', '&gt;'), stripslashes($data));
 	}
-	public function prep_url($str = ''){
-		if ($str == 'http://' OR $str == ''){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Prep URL
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	string
+	 */
+	public function prep_url($str = '')
+	{
+		if ($str == 'http://' OR $str == '')
+		{
 			return '';
 		}
-		if (substr($str, 0, 7) != 'http://' && substr($str, 0, 8) != 'https://'){
+
+		if (substr($str, 0, 7) != 'http://' && substr($str, 0, 8) != 'https://')
+		{
 			$str = 'http://'.$str;
 		}
+
 		return $str;
 	}
-	public function strip_image_tags($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Strip Image Tags
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	string
+	 */
+	public function strip_image_tags($str)
+	{
 		return $this->HP->input->strip_image_tags($str);
 	}
-	public function xss_clean($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * XSS Clean
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	string
+	 */
+	public function xss_clean($str)
+	{
 		return $this->HP->security->xss_clean($str);
 	}
-	public function encode_php_tags($str){
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Convert PHP tags to entities
+	 *
+	 * @access	public
+	 * @param	string
+	 * @return	string
+	 */
+	public function encode_php_tags($str)
+	{
 		return str_replace(array('<?php', '<?PHP', '<?', '?>'),  array('&lt;?php', '&lt;?PHP', '&lt;?', '?&gt;'), $str);
 	}
+
 }
 /* Location: ./libraries/Validation.php */

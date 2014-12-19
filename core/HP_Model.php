@@ -1,6 +1,7 @@
 <?php
 class HP_Model extends CI_Model{
 public $table;
+public $rule;
 protected $class;
 private $tmp_tabel;
 
@@ -33,9 +34,7 @@ private $tmp_tabel;
 		return $this->db->from($this->table);
 	}
 	public function create($data){
-		$this->load->library('validation');
-		
-		if($this->validation->check($data,$this->rule())){
+		if(get_library('validation')->check($data,$this->rule)){
 			return $this->db->insert($this->class,$data);
 		}
 	}

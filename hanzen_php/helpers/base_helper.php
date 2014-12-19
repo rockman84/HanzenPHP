@@ -1,12 +1,20 @@
 <?php
 /**
- * return path for root folder
+ * return path for webroot folder
+ *
+ * @param string
+ * @return string
  */
 function root($path = ''){
 	return base_url(config_item('webroot_folder').'/'.$path);
 }
 /**
  * quick call function with a single parameter
+ * split by "|" mark, Example : qcall('foo','htmlspecialchars|nl2br');
+ *
+ * @param string
+ * @param string - any function name with single parameter
+ * @return mixed
  */
 function qcall($raw,$function){
 	foreach(explode('|',$function) as $role){
@@ -22,71 +30,99 @@ function qcall($raw,$function){
 }
 /**
  * return a plug-in class
+ * @example : get_plugin('plugin_name')->method_name();
+ *
+ * @param string / array
+ * @return object
  **/
-function get_plugin($class = null){
+function get_plugin($plugin_name = null){
 	$HP = & get_instance();
-	if($class != null){
-		if(!is_array($class)){
-			$class = array($class);
+	if($plugin_name != null){
+		if(!is_array($plugin_name)){
+			$plugin_name = array($plugin_name);
 		}
-		foreach($class as $name){
+		foreach($plugin_name as $name){
 			if(!isset($HP->plugin->$name)){
 				$HP->load->plugin($name);
 			}
 		}
-		if(count($class) == 1){
-			$class = strtolower($class[0]);
-			return $HP->plugin->$class;
+		if(count($plugin_name) == 1){
+			$plugin_name = strtolower($plugin_name[0]);
+			return $HP->plugin->$plugin_name;
 		}
 	}
 	return $HP->plugin;
 }
 /**
  * return a model class
+ * @example : get_model('model_name')->method_name();
+ *
+ * @param string / array
+ * @param string
+ * @param boolean
+ * @return object
  **/
-function get_model ($class = null){
+function get_model ($model_name = null,$name = '',$db_conn = False){
 	$HP = & get_instance();
-	if($class != null){
-		if(!is_array($class)){
-			$class = array($class);
+	if($model_name != null){
+		if(!is_array($model_name)){
+			$model_name = array($model_name);
 		}
-		foreach($class as $name){
-			if(!isset($HP->model->$name)){
-				$HP->load->model($name);
+		$HP->load->model($model_name,$name,$db_conn);
+		if(count($model_name) == 1){
+			$model_name = strtolower($model_name[0]);
+			if($name != ''){
+				return $HP->model->$name;
 			}
-		}
-		if(count($class) == 1){
-			$class = strtolower($class[0]);
-			return $HP->model->$class;
+			return $HP->model->$model_name;
 		}
 	}
 	return $HP->model;
 }
 /**
  * load helper
+ * @example : get_helper('helper_name');
+ * 
+ * @param string / array
  **/
-function get_helper($files){
+function get_helper($helper_name){
 	$HP = & get_instance();
-	$HP->load->helper($files);
+	$HP->load->helper($helper_name);
 }
 /**
  * return a library class
+ * @example : get_library('library_name')->method_name();
+ *
+ * @param string / array
+ * @return object
  **/
-function get_library($class = null){
+function get_library($library_name = null){
 	$HP = & get_instance();
-	if($class != null){
-		if(!is_array($class)){
-			$class = array($class);
+	if($library_name != null){
+		if(!is_array($library_name)){
+			$library_name = array($library_name);
 		}
-		foreach($class as $name){
+		foreach($library_name as $name){
 			$HP->load->library($name);
 		}
-		if(count($class) == 1){
-			$class = strtolower($class[0]);
-			return $HP->$class;
+		if(count($library_name) == 1){
+			$library_name = strtolower($library_name[0]);
+			return $HP->$library_name;
 		}
 	}
 	return $HP;
+}
+/**
+* load view
+*
+* @param string
+* @param array
+* @param boolean
+* @return string/html
+**/
+function get_view($view_name = null,$data = array(),$return = TRUE){
+	$HP = & get_instance();
+	return $HP->load->view($view_name,$data,$return);
 }
 /**
 * @params $index string, $replace array
@@ -101,11 +137,18 @@ function text($index, $replace = null){
 	return $lang?$lang:'['.$index.']';
 }
 /**
- * quick set error message;
+ * quick set error message, this from library class Msg
+ * same thing as $this->msg->set();
+ * 
+ * @param string
+ * @param string
+ * @param string
+ * @return object (class Msg)
  */
 function set_msg($string,$replace = null,$index = 'error'){
 	$HZ = & get_instance();
 	$HZ->msg->set($string,$replace,$index);
+	return $HZ->msg;
 }
 
 /**

@@ -81,6 +81,7 @@
 
 		<p>If you are exploring CodeIgniter for the very first time, you should start by reading the <a href="user_guide/">User Guide</a>.</p>
 		<p><a href="<?php echo site_url('example');?>">Example</a></p>
+		<p><a href="<?php echo site_url('api_referance');?>">API Referance</a></p>
 	</div>
 
 	<p class="footer">Page rendered in <strong>{elapsed_time}</strong> seconds</p>

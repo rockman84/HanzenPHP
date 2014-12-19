@@ -16,16 +16,31 @@ private $config = array(
 	)
 );
 public $msg = array();
+public $message = array();
 public $is_error = FALSE;
 public $total_msg = 0;
 public $convert = TRUE;
 	public function __CONSTRUCT(){
 		$this->HZ = & get_instance();
 	}
+	/**
+	 * add new group message
+	 *
+	 * @param array
+	 * @return void
+	 **/
 	public function set_group($config){
 		$this->config = array_merge($this->config,$config);
+		return $this;
 	}
-
+	/**
+	 * quick Set storage message
+	 *
+	 * @param string
+	 * @param string
+	 * @param string
+	 * @return void
+	 **/
 	public function set($string, $replace = null, $index = 'error'){
 		if(isset($this->config[$index])){
 			$setup = $this->config[$index];
@@ -34,7 +49,17 @@ public $convert = TRUE;
 		else{
 			$this->set_msg($string,$replace,$index);
 		}
+		return $this;
 	}
+	/**
+	 * Set storage message by manual
+	 * 
+	 * @param string
+	 * @param string
+	 * @param string - group name
+	 * @param boolean - this message is error?
+	 * @return void
+	 */
 	public function set_msg($string, $replace = null, $group = 'error', $set_error = TRUE){
 		$this->msg[$group][] = array(
 			'index' => $string,
@@ -42,8 +67,14 @@ public $convert = TRUE;
 		);
 		$this->total_msg = $this->total_msg + 1;
 		if($set_error){$this->is_error = true;}
+		return $this;
 	}
-	/* clear all msg */
+	/**
+	 * clear all storage msg
+	 *
+	 * @param string
+	 * @return void
+	 */
 	public function clear_msg($group = 'all'){
 		if($group == 'all'){
 			$this->msg = array();
@@ -55,12 +86,31 @@ public $convert = TRUE;
 			unset($this->msg[$group]);
 			$this->total_msg = $this->total_msg - $count;
 		}
+		return $this;
 	}
-	/* error checking */
+	/**
+	 * its have a error
+	 *
+	 * @param string
+	 * @return boolean
+	 */
 	public function is_error($group){
 		if(count($this->msg[$group]) > 0){
 			return TRUE;
 		}
+	}
+	/**
+	 * get message
+	 *
+	 * @param string
+	 * @return array
+	 **/
+	public function get_msg($group = 'error'){
+		$this->message = $this->get_all();
+		if(isset($this->message['msg'][$group])){
+			return $this->message['msg'][$group];
+		}
+		return array();
 	}
 	/* get all msg return array*/
 	public function get_all(){

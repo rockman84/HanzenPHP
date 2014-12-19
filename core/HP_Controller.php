@@ -25,9 +25,11 @@
  * @author		Wong Hansen
  */
  
-/** Hanzen PHP Define **/
+/** Path HanzenPHP directory folder **/
 define('HP_PATH',APPPATH.'third_party/hanzen_php/');
-define('HP_VERSION','1.0.1');
+
+/** Hanzen PHP Version **/
+define('HP_VERSION','1.0.2');
 
 /** Auto Load Class
  * auto load file necessary when extend class
@@ -51,7 +53,6 @@ function __autoload($class) {
 class HP_Controller extends CI_Controller{
 public $title;
 public $plugin;
-public $exception = true;
 	public function __CONSTRUCT(){
 		parent::__CONSTRUCT();
 		/* initialize default hanzen packages */

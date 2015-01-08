@@ -17,8 +17,8 @@ class HP_Loader extends CI_Loader{
 		$file_name = $plugin . '_plugin';
 		if(!isset($HP->plugin->$plugin)){
 			foreach(array(APPPATH,HP_PATH) as $path){
-				if(file_exists($path.'/plugins/'.$file_name.EXT)){
-					include_once($path.'/plugins/'.$file_name.EXT);
+				if(file_exists($path.'plugins/'.ucfirst($file_name).EXT)){
+					include_once($path.'plugins/'.$file_name.EXT);
 					$class = ucfirst($plugin).'_Plugin';
 					if(class_exists($class)){
 						$HP = &get_instance();
@@ -28,12 +28,10 @@ class HP_Loader extends CI_Loader{
 						show_error("Unable to load the requested class: ".$plugin);
 					}
 				}
-				else{
-					if(HP_PATH == $path){
-						show_error('Unable to locate the plugin you have specified: '.$plugin);
-						return;
-					}
-				}
+			}
+			if(!isset($HP->plugin->$plugin)){
+				show_error('Unable to locate the plugin you have specified: '.$file_name);
+				return;
 			}
 		}
 	}

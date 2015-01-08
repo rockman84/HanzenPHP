@@ -29,8 +29,7 @@
 define('HP_PATH',APPPATH.'third_party/hanzen_php/');
 
 /** Hanzen PHP Version **/
-define('HP_VERSION','1.0.2');
-
+define('HP_VERSION','1.0.3');
 /** Auto Load Class
  * auto load file necessary when extend class
  */
@@ -60,10 +59,13 @@ public $plugin;
 		$this->model = new stdClass();
 		$this->title = 'HanzenPHP (Extend Version)';
 		$this->load->add_package_path(HP_PATH);
+		/** Load Config **/
+		$this->load->config('hanzen_php');
+		date_default_timezone_set(config_item('default_timezone'));
 		$this->load->library('msg');
 		$this->load->helper(array('url','base'));
-		$this->load->config('hanzen_php');
 		log_message('debug', "HanzenPHP Initialized");
+		set_msg('Load Controller : '.get_class($this),'','debug');
 	}
 	/**
 	* remap execute controller
@@ -77,7 +79,10 @@ public $plugin;
 		else{
 			show_404();
 		}
-		$this->output->enable_profiler($this->config->item('enable_profiling'));
+		$this->output->enable_profiler($this->config->item('show_profiling'));
+		if(config_item('show_message_debug')){
+			$this->load->view('hp_message_debug',$this->msg->get_all());
+		}
 	}
 	/**
 	 * execute pre controller

@@ -4,21 +4,21 @@
 * @copyright 2014 Hansen Wong
 * @license http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
 * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
-* @version 1.0.2
+* @version 1.0.3
 */
-
 class Msg {
 public $HZ;
+/**
+* set group message
+**/
 private $config = array(
-	'error'	=> array(
-		'set_error' => true,
-		'log'	=> true,
-	)
+	'error'	=> array('set_error' => true),
+	'form_error' => array('set_error' => true),
+	'info'	=> array('set_error' => false),
+	'debug'	=> array('set_error' => false)
 );
 public $msg = array();
-public $message = array();
 public $is_error = FALSE;
-public $total_msg = 0;
 public $convert = TRUE;
 	public function __CONSTRUCT(){
 		$this->HZ = & get_instance();
@@ -53,7 +53,9 @@ public $convert = TRUE;
 	}
 	/**
 	 * Set storage message by manual
-	 * 
+	 * ```
+	 * [key]string
+	 * ```
 	 * @param string
 	 * @param string
 	 * @param string - group name
@@ -61,11 +63,18 @@ public $convert = TRUE;
 	 * @return void
 	 */
 	public function set_msg($string, $replace = null, $group = 'error', $set_error = TRUE){
-		$this->msg[$group][] = array(
+		$key = null;
+		if(preg_match("/\[(.*)\](.*)/",$string, $match)){
+			$key = $match[1];
+			$string = $match[2];
+		}
+		$msg = array(
+			'key' => $key,
 			'index' => $string,
 			'replace' => $replace
 		);
-		$this->total_msg = $this->total_msg + 1;
+		$this->msg[$group][] = $msg;
+	
 		if($set_error){$this->is_error = true;}
 		return $this;
 	}
@@ -79,72 +88,63 @@ public $convert = TRUE;
 		if($group == 'all'){
 			$this->msg = array();
 			$this->is_error = FALSE;
-			$this->total_msg = 0;
 		}
 		else{
 			$count = count($this->msg[$group]);
 			unset($this->msg[$group]);
-			$this->total_msg = $this->total_msg - $count;
 		}
 		return $this;
 	}
 	/**
-	 * its have a error
-	 *
-	 * @param string
-	 * @return boolean
-	 */
-	public function is_error($group){
-		if(count($this->msg[$group]) > 0){
-			return TRUE;
-		}
-	}
-	/**
 	 * get message
 	 *
-	 * @param string
+	 * @param string (default error)
 	 * @return array
 	 **/
-	public function get_msg($group = 'error'){
-		$this->message = $this->get_all();
-		if(isset($this->message['msg'][$group])){
-			return $this->message['msg'][$group];
+	public function get($group = 'error'){
+		$msg = array();
+		if(isset($this->msg[$group])){
+			$msg = $this->_convert($this->msg[$group]);
 		}
-		return array();
+		return $msg;
 	}
-	/* get all msg return array*/
+	/* get all msg return array
+	@return array
+	*/
 	public function get_all(){
-		$result = array(
-			'msg' => $this->_convert_array($this->msg),
-			'is_error' => $this->is_error,
-			'total' => $this->total_msg
-		);
+		$result['msg'] = array();
+		foreach($this->msg as $group => $val){
+			$result['msg'][$group] = $this->_convert($val);
+		}
+		$result['is_error'] = $this->is_error;
 		return $result;
 	}
 	/* run batch convert */
-	protected function _convert_array($data){
+	protected function _convert($data){
 		$msg = array();
-		if(is_array($data)){
-			foreach($data as $name => $val){
-				foreach($val as $index){
-					$msg[$name][] = string_replace($this->_convert($index['index']),$index['replace']);
-				}
+		foreach($data as $m){
+			$d = string_replace($this->_get_lang($m['index']),$m['replace']);
+			if($m['key'] !== null){
+				$msg[strtoupper($m['key'])] = $d;
+			}
+			else{
+				$msg[] = $d;
 			}
 		}
 		return $msg;
 	}
-	/* run single convert */
-	protected function _convert($source){
+	/* get_language */
+	protected function _get_lang($source){
 		if($this->convert){
 			if(isset($this->HZ->lang->language[$source])){
 				$source = $this->HZ->lang->language[$source];
-			}
-			else{
-				$source = '['.$source.']';
 			}
 		}
 		return $source;
 	}
 }
-/** End of Msg Class **/
-?>
+
+// END Msg class
+
+/* End of file Msg.php */
+/* Location: ./hanzen_php/libraries/Msg.php */

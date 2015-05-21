@@ -1,11 +1,5 @@
 <?php
 class HP_Output extends CI_Output{
-public $HP;
-	// append to json data
-	public function json($data){
-		$this->set_content_type('json');
-		$this->set_output(json_encode($data));
-	}
 	public function no_cache(){
 		$this->set_header("Cache-Control: no-store, no-cache, must-revalidate")
 			->set_header("Cache-Control: post-check=0, pre-check=0",false)

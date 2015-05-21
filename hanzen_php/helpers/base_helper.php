@@ -1,6 +1,7 @@
 <?php
 /**
  * return path for webroot folder
+ * example: [code] echo root('script.js');[/code]
  *
  * @param string
  * @return string
@@ -10,7 +11,8 @@ function root($path = ''){
 }
 /**
  * quick call function with a single parameter
- * split by "|" mark, Example : qcall('foo','htmlspecialchars|nl2br');
+ * split by "|" mark
+ * Example : [code]qcall('foo','htmlspecialchars|nl2br');[/code]
  *
  * @param string
  * @param string - any function name with single parameter
@@ -29,33 +31,58 @@ function qcall($raw,$function){
 	return $raw;
 }
 /**
- * return a plug-in class
- * @example : get_plugin('plugin_name')->method_name();
+ * Load Class File
  *
- * @param string / array
+ * @param string
+ * @param string
+ * @param string
+ */
+function &load_file($file,$prefix='',$surfix = ''){
+	static $_files = array();
+	$path = '';
+	$name = FALSE;
+	if (($last_slash = strrpos($file, '/')) !== FALSE){
+		$path = substr($file, 0, $last_slash + 1);
+		$file = substr($file, $last_slash + 1);
+	}
+	$class = ucfirst($prefix.$file.$surfix);
+	if (isset($_files[$file])){
+		return $_files[$file];
+		
+	}
+	foreach(get_instance()->load->get_package_paths(FALSE)  as $val){
+		$file_path = $val.$path.$file.'.php';
+		if(file_exists($file_path)){
+			$name = ucfirst($file);
+			include_once $file_path;
+			break;
+		}
+	}
+	if($name === FALSE){
+		show_error('File Not Found: '.$path.$file.'.php');
+	}
+	if(class_exists($class)){
+		$_files[$file] = array(
+			'name' => str_replace(array($prefix,$surfix),'',$file),
+			'return' => new $class()
+		);
+	}
+	return $_files[$file];
+}
+/**
+ * return a plug-in class
+ * @example : [code]get_plugin('plugin_name')->method_name();[/code]
+ *
+ * @param string | array
  * @return object
  **/
 function get_plugin($plugin_name = null){
 	$HP = & get_instance();
-	if($plugin_name != null){
-		if(!is_array($plugin_name)){
-			$plugin_name = array($plugin_name);
-		}
-		foreach($plugin_name as $name){
-			if(!isset($HP->plugin->$name)){
-				$HP->load->plugin($name);
-			}
-		}
-		if(count($plugin_name) == 1){
-			$plugin_name = strtolower($plugin_name[0]);
-			return $HP->plugin->$plugin_name;
-		}
-	}
-	return $HP->plugin;
+	return $HP->load->plugin($plugin_name);
 }
 /**
  * return a model class
- * @example : get_model('model_name')->method_name();
+ * @example : [code]get_model('model_name')->method_name();[/code]
  *
  * @param string / array
  * @param string
@@ -81,7 +108,7 @@ function get_model ($model_name = null,$name = '',$db_conn = False){
 }
 /**
  * load helper
- * @example : get_helper('helper_name');
+ * @example : [code]get_helper('helper_name');[/code]
  * 
  * @param string / array
  **/
@@ -91,14 +118,14 @@ function get_helper($helper_name){
 }
 /**
  * return a library class
- * @example : get_library('library_name')->method_name();
+ * @example : [code]get_library('library_name')->method_name();[/code]
  *
  * @param string / array
  * @return object
  **/
 function get_library($library_name = null){
 	$HP = & get_instance();
-	if($library_name != null){
+	if($library_name !== null){
 		if(!is_array($library_name)){
 			$library_name = array($library_name);
 		}
@@ -128,31 +155,34 @@ function get_view($view_name = null,$data = array(),$return = TRUE){
 * @params $index string, $replace array
 * @return string
 **/
-function text($index, $replace = null){
+function text($item, $replace = null){
 	$HZ = & get_instance();
-	$lang = $HZ->lang->line($index);
+	$lang = $HZ->lang->line($item);
 	if(is_array($replace)){
-		$lang = $HZ->msg->replace($lang,$replace);
+		$lang = string_replace($lang,$replace);
 	}
-	return $lang?$lang:'['.$index.']';
+	return $lang?$lang:'['.$item.']';
 }
 /**
  * quick set error message, this from library class Msg
- * same thing as $this->msg->set();
+ * same thing as [code]$this->msg->set();[/code]
  * 
  * @param string
- * @param string
+ * @param array
  * @param string
  * @return object (class Msg)
  */
-function set_msg($string,$replace = null,$index = 'error'){
+function set_msg($string,$replace = null,$group = 'error'){
 	$HZ = & get_instance();
-	$HZ->msg->set($string,$replace,$index);
+	$HZ->msg->set($string,$replace,$group);
 	return $HZ->msg;
 }
 
 /**
  * String replace
+ *
+ * @param string
+ * @param string | array
  */
 function string_replace($string,$replace){
 	if(is_array($replace)){

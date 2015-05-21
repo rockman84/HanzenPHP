@@ -5,25 +5,27 @@
 * @copyright 2014 Hansen Wong
 * @version 1.2
 
-@example :
+@example :[code]
 	$rule = array(
 		'email' => 'min_length[5]|valid_email|max_length[30]|required|strtoupper',
 		'ip_addr' => 'required|valid_ip|strtoupper'
 	);
 	if(get_library('validation')->set_language()->check($_POST,$rule)){
 		// do something when valid
-	}
+	}[/code]
 */
 class Validation {
-public $HP;
-public $label;
-public $data = array();
-public $rules = array();
+private $HP;
+private $label;
+private $data = array();
+private $rules = array();
 public $primary = null;
 public $update = false;
 public $error = false;
-public $msg = array();
+private $msg = array();
+public $error_group = 'form_error';
 public $flash_data = false;
+public $local_error = false;
 	public function __CONSTRUCT(){
 		$this->HP = & get_instance();
 		// Set the character encoding in MB.
@@ -39,7 +41,7 @@ public $flash_data = false;
 	 * @param boolean
 	 * @return Boolean
 	 */
-	public function check($data,$rule = array(),$base_on_rule = true){
+	public function check($data,$rule,$base_on_rule = true){
 		/* clean data */
 		$this->data = array();
 		$this->error = false;
@@ -49,6 +51,9 @@ public $flash_data = false;
 		/* run checking */
 		$this->_run();
 		/* result checking */
+		if(!$this->error){
+			return $this->data;
+		}
 		return !$this->error;
 	}
 	/**
@@ -61,10 +66,7 @@ public $flash_data = false;
 		if($field != null AND isset($this->msg[$field])){
 			return $this->msg[$field];
 		}
-		elseif($field == null){
-			return $this->msg;
-		}
-		return array();
+		return $this->msg;
 	}
 	/**
 	 * set language for error message
@@ -85,6 +87,26 @@ public $flash_data = false;
 	public function set_label($data){
 		$this->label = $data;
 		return $this;
+	}
+	/** set error message in validation class **/
+	public function set_error($rule,$param,$field,$value,$label){
+		$this->error = true;
+		if($label== null){
+			$label = $field;
+		}
+		$replace = array(ucwords(str_replace('_',' ',$label)),$param,$rule,$value);
+		
+		set_msg(strtoupper($rule),$replace,$this->error_group);
+		if($this->local_error){
+			$this->_local_error($rule,$field,$replace);
+		}
+	}
+	protected function _local_error($rule,$field,$replace){
+		$lang = $this->HP->lang->line(strtoupper($rule));
+		$lang = $lang == ''?'['.$rule.']':$lang;
+
+		/** {0} = label / field, {1} = param, {2} = value, {3} rule **/
+		$this->msg[$field][] = string_replace($lang,$replace);
 	}
 	protected function _set($data,$rule = array(),$base_on_rule = true){
 		$this->rules = $rule;
@@ -156,14 +178,14 @@ public $flash_data = false;
 					if(!$callback){
 						if(method_exists($this,$rule)){
 							if(!$this->$rule($data['value'],$param,$data['field'])){
-								$this->_set_error($rule,$param,$data['field'],$data['value'],$data['label']);
+								$this->set_error($rule,$param,$data['field'],$data['value'],$data['label']);
 							}
 						}
 						elseif(function_exists($rule)){
 							$prep = $rule($this->data[$data['field']]['value']);
 							if(is_bool($prep)){
 								if($prep){
-									$this->_set_error($rule,$param,$data['field'],$data['value'],$data['label']);
+									$this->set_error($rule,$param,$data['field'],$data['value'],$data['label']);
 								}
 							}
 							else{
@@ -179,13 +201,13 @@ public $flash_data = false;
 						/** call_method **/
 						if($callback == 'parent' and method_exists($this->HP,$call[0])){
 							if(!$this->HP->$call[1]($data['value'],$param)){
-								$this->_set_error($call[0],$param,$data['field'],$data['value'],$data['label']);
+								$this->set_error($call[0],$param,$data['field'],$data['value'],$data['label']);
 							}
 						}
 						/** call_class:method **/
 						elseif($callback == 'class' and method_exists($this->HP->$call[0],$call[1])){
 							if(!$this->HP->$call[0]->$call[1]($data['value'],$param)){
-								$this->_set_error($call[1],$param,$data['field'],$data['value'],$data['label']);
+								$this->set_error($call[1],$param,$data['field'],$data['value'],$data['label']);
 							}
 						}
 						else{
@@ -206,20 +228,6 @@ public $flash_data = false;
 		else{
 			set_msg('NO_INPUT_DATA');
 		}
-	}
-	/** set error message **/
-	protected function _set_error($rule,$param,$field,$value,$label){
-		$this->error = true;
-		if(!isset($this->msg[$field])){
-			$this->msg[$field] = array();
-		}
-		$lang = $this->HP->lang->line(strtoupper($rule));
-		$lang = $lang == ''?'['.$rule.']':$lang;
-		if($label== null){
-			$label = $field;
-		}
-		/** {0} = label / field, {1} = param, {2} = value, {3} rule **/
-		$this->msg[$field][] = string_replace($lang, array(ucwords(str_replace('_',' ',$label)),$param,$rule,$value));
 	}
 	/**
 	 * nothing do
@@ -704,4 +712,8 @@ public $flash_data = false;
 	}
 
 }
-/* Location: ./libraries/Validation.php */
+
+// END Validation class
+
+/* End of file Validation.php */
+/* Location: ./hanzen_php/libraries/Validation.php */

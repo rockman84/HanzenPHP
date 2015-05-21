@@ -2,40 +2,43 @@
 class HP_Loader extends CI_Loader{
 	/** Plugin Loader **/
 	public function plugin($plugin){
-		if(!is_array($plugin)){
-			$plugin = array($plugin);
-		}
+		return $this->_load_plugin($plugin);
+	}
+	/**
+	* plugin init class
+	*
+	* @param array | string
+	* @return void
+	**/
+	protected function _load_plugin($plugin){
 		$HP = &get_instance();
-		foreach($plugin as $name){
-			$this->_load_plugin($name);
+		if(is_array($plugin)){
+			foreach($plugin as $val){
+				$this->_load_plugin($val);
+			}
+			return $HP->plugin;
 		}
-		return $HP->plugin;
-	}
-	/** plugin init class **/
-	protected function _load_plugin($plugin,$params = null){
-		$plugin = strtolower($plugin);
-		$file_name = $plugin . '_plugin';
-		if(!isset($HP->plugin->$plugin)){
-			foreach(array(APPPATH,HP_PATH) as $path){
-				if(file_exists($path.'plugins/'.ucfirst($file_name).EXT)){
-					include_once($path.'plugins/'.$file_name.EXT);
-					$class = ucfirst($plugin).'_Plugin';
-					if(class_exists($class)){
-						$HP = &get_instance();
-						$HP->plugin->$plugin = new $class;
-					}
-					else{
-						show_error("Unable to load the requested class: ".$plugin);
-					}
-				}
-			}
-			if(!isset($HP->plugin->$plugin)){
-				show_error('Unable to locate the plugin you have specified: '.$file_name);
-				return;
-			}
+		$pl = &load_file('plugins/'.$plugin,'','_Plugin');
+		// check class is exist
+		if($pl){
+			$name = strtolower($pl['name']);
+			$HP->plugin->$name = $pl['return'];
+			return $HP->plugin->$name;
+		}
+		else{
+			show_error("Unable to load the requested class: ".$plugin);
 		}
 	}
-
+	/**
+	 * Model Loader (modified)
+	 *
+	 * This function lets users load and instantiate models.
+	 *
+	 * @param	string	the name of the class
+	 * @param	string	name for the model
+	 * @param	bool	database connection
+	 * @return	void
+	 */
 	public function model($model, $name = '', $db_conn = FALSE)
 	{
 		if (is_array($model))
@@ -118,4 +121,6 @@ class HP_Loader extends CI_Loader{
 		show_error('Unable to locate the model you have specified: '.$model);
 	}
 }
+
+/* End of file HP_Loader.php */
 /* Location: ./core/HP_Loader.php */

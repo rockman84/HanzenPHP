@@ -24,26 +24,24 @@
  * @category	Core
  * @author		Wong Hansen
  */
- 
 /** Path HanzenPHP directory folder **/
 define('HP_PATH',APPPATH.'third_party/hanzen_php/');
-
 /** Hanzen PHP Version **/
-define('HP_VERSION','1.0.3');
+define('HP_VERSION','1.0.4');
 /** Auto Load Class
  * auto load file necessary when extend class
  */
 function __autoload($class) {
-	if(strpos($class, 'HP_') === 0){
+	if(strpos($class, '_') === 2){
 		foreach(array(APPPATH, HP_PATH) as $path){
-			if(file_exists($path . 'core/' . $class . EXT)){
-				@include_once( $path . 'core/' . $class . EXT );
+			if(file_exists($path . 'core/' . $class . '.php')){
+				@include_once( $path . 'core/' . $class . '.php' );
 				break;
 			}
 		}
 	}
 	else{
-		@include_once(APPPATH.'controllers/'.strtolower($class).EXT);
+		@include_once(APPPATH.'controllers/'.strtolower($class).'.php');
 	}
 }
 /* End auto load class */
@@ -55,15 +53,20 @@ public $plugin;
 	public function __CONSTRUCT(){
 		parent::__CONSTRUCT();
 		/* initialize default hanzen packages */
+		if(file_exists(HP_PATH.'libraries/Start.php')){
+			require_once HP_PATH.'libraries/Start.php';
+		}
 		$this->plugin = new stdClass();
 		$this->model = new stdClass();
 		$this->title = 'HanzenPHP (Extend Version)';
 		$this->load->add_package_path(HP_PATH);
+		
 		/** Load Config **/
-		$this->load->config('hanzen_php');
+		$this->load->config('hp_config');
 		date_default_timezone_set(config_item('default_timezone'));
 		$this->load->library('msg');
 		$this->load->helper(array('url','base'));
+		
 		log_message('debug', "HanzenPHP Initialized");
 		set_msg('Load Controller : '.get_class($this),'','debug');
 	}
@@ -71,6 +74,7 @@ public $plugin;
 	* remap execute controller
 	**/
 	public function _remap($method,$param){
+		$this->params = $param;
 		if(method_exists($this,$method)){
 			$this->_before();
 			call_user_func_array(array($this,$method),$param);
